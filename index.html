@@ -3,32 +3,105 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <title>RESTO ULUS — المنيو</title>
 
 <style>
+* {
+    box-sizing: border-box;
+}
+
 html, body {
     margin: 0;
     padding: 0;
-    width: 100%;
-    height: 100%;
     background: #111;
 }
 
 body {
-    overflow: hidden;
+    overflow-x: hidden;
 }
 
-iframe {
+#menu {
     width: 100%;
-    height: 100vh;
-    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+}
+
+.page {
+    display: block;
+    width: 100%;
+    max-width: 900px;
+    height: auto;
+    background: white;
+}
+
+#loading {
+    color: white;
+    font-family: Arial, sans-serif;
+    font-size: 20px;
+    padding: 40px;
+    text-align: center;
 }
 </style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
 </head>
 
 <body>
 
-<iframe src="menu.pdf"></iframe>
+<div id="loading">جاري تحميل المنيو...</div>
+
+<div id="menu"></div>
+
+<script>
+
+const pdfUrl = "menu.pdf";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+const menu = document.getElementById("menu");
+const loading = document.getElementById("loading");
+
+pdfjsLib.getDocument(pdfUrl).promise.then(async function(pdf) {
+
+    loading.remove();
+
+    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+
+        const page = await pdf.getPage(pageNumber);
+
+        const viewport = page.getViewport({ scale: 2 });
+
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+
+        canvas.className = "page";
+
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        menu.appendChild(canvas);
+
+        await page.render({
+            canvasContext: context,
+            viewport: viewport
+        }).promise;
+    }
+
+}).catch(function(error) {
+
+    loading.innerHTML =
+        "حدث خطأ في تحميل المنيو.<br><br>" +
+        error.message;
+
+});
+
+</script>
 
 </body>
 </html>
